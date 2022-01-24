@@ -40,7 +40,7 @@ const removeContact = async (contactId) => {
 const addContact = async (name, email, phone) => {
   try {
     const contacts = await listContacts();
-    const newContact = {id: uuid(),  name, email, phone }
+    const newContact = {id: uuid(), name, email, phone }
     contacts.push(newContact)
     await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2),)
     return newContact;
@@ -49,14 +49,14 @@ const addContact = async (name, email, phone) => {
   }
 };
 
-const updateContact = async (contactId, name, email, phone) => {
+const updateContact = async (id, name, email, phone) => {
   try {
     const contacts = await listContacts();
-    const contactIndex = contacts.findIndex(contact => contact.id === contactId)
+    const contactIndex = contacts.findIndex(contact => contact.id === id)
     if (contactIndex === -1) {
       return null
     }
-    contacts[contactIndex] = { contactId, name, email, phone }
+    contacts[contactIndex] = { id, name, email, phone }
     await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
     return contacts[contactIndex]
     
