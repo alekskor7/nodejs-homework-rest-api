@@ -49,17 +49,17 @@ const addContact = async (name, email, phone) => {
   }
 };
 
-const updateContact = async (contactId, body) => {
+const updateContact = async (contactId, name, email, phone) => {
   try {
     const contacts = await listContacts();
     const contactIndex = contacts.findIndex(contact => contact.id === contactId)
-    if (contactIndex !== -1) {
-      const updatedContact = { id: contactId, ...contacts[contactIndex], ...body }
-      contacts[contactIndex] = updatedContact
-      await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
-      return updatedContact
+    if (contactIndex === -1) {
+      return null
     }
-    return null
+    contacts[contactIndex] = { contactId, name, email, phone }
+    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2))
+    return contacts[contactIndex]
+    
   } catch (error) {
     console.error(error.message)
   }

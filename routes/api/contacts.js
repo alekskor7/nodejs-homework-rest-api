@@ -48,7 +48,7 @@ router.post('/', async (req, res, next) => {
       // eslint-disable-next-line new-cap
       throw new createError(400, "missing required name field");
     } else {
-      const { name, email, phone } = req.params;
+      const { name, email, phone } = req.body;
       const newContact = await contactsOperations.addContact( name, email, phone );
       res.status(201).json(newContact);
       }
@@ -80,8 +80,8 @@ router.put('/:id', async (req, res, next) => {
       throw new createError(400, "missing required name field");
     }
     const { id } = req.params;
-    
-    const updatedContact = await contactsOperations.updateContact(id, req.body);
+    const { name, email, phone } = req.body;
+    const updatedContact = await contactsOperations.updateContact(id, name, email, phone);
     if (!updatedContact) {
       // eslint-disable-next-line new-cap
       throw new createError(404, "Not found");
