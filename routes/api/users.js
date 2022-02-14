@@ -2,8 +2,13 @@ const express = require("express");
 const createError = require("http-errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs").promises;
+const gravatar = require("gravatar");
 
 const { authenticate } = require("../../middlewares");
+const { upload } = require("../../middlewares");
+const { resizeAvatar } = require("../../middlewares");
 
 const { User, schemas } = require("../../model/user");
 
@@ -30,11 +35,12 @@ router.post("/signup", async (req, res, next) => {
         // eslint-disable-next-line new-cap
         throw new createError(409, "Email in use");
       }
-
       const salt = await bcrypt.genSalt(10);
       const hashPassword = await bcrypt.hash(password, salt);
+      const avatarURL = gravatar.url(email);
       const result = await User.create({
         email,
+        avatarURL,
         password: hashPassword,
         subscription,
       });
@@ -44,6 +50,7 @@ router.post("/signup", async (req, res, next) => {
       res.status(201).json({
         user: {
           email,
+          avatarURL,
           subscription,
         },
       });
@@ -112,5 +119,31 @@ router.get("/logout", authenticate, async (req, res, next) => {
   await User.findByIdAndUpdate(_id, { token: "" });
   res.status(204).send();
 });
+
+const avatarsDir = path.join(__dirname, "../../", "public", "avatars");
+
+router.patch(
+  "/avatars",
+  authenticate,
+  upload.single("avatar"),
+  async (req, res, next) => {
+    const { _id } = req.user;
+    const { path: tempUpload, filename } = req.file;
+    try {
+      const [extention] = filename.split(".").reverse();
+      const newFileName = `${_id}.${extention}`;
+      const resultUpload = path.join(avatarsDir, newFileName);
+      await fs.rename(tempUpload, resultUpload);
+      const avatarURL = path.join("avatars", newFileName);
+      await User.findByIdAndUpdate(_id, { avatarURL });
+      await resizeAvatar(resultUpload);
+      res.json({
+        avatarURL,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 module.exports = router;
